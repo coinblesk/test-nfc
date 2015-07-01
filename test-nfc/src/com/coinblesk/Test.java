@@ -13,12 +13,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import ch.uzh.csg.nfclib.NfcInitiatorHandler;
+import ch.uzh.csg.nfclib.NfcLibException;
 import ch.uzh.csg.nfclib.NfcResponseHandler;
 import ch.uzh.csg.nfclib.NfcSetup;
 import ch.uzh.csg.nfclib.ResponseLater;
@@ -32,7 +32,6 @@ public class Test extends Activity {
 	private List<byte[]> data = new ArrayList<byte[]>();
 	private int dataSize = 0;
 	private List<byte[]> receivedData = new ArrayList<byte[]>();
-	private int counter = 0;
 	
 	private NfcSetup initiator = null;
 
@@ -43,29 +42,55 @@ public class Test extends Activity {
 		final Button button1 = (Button) findViewById(R.id.button1);
 		button1.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				send50b();
+				try {
+					send50b();
+				} catch (NfcLibException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
 		});
 		final Button button2 = (Button) findViewById(R.id.button2);
 		button2.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				send500b();
+				try {
+					send500b();
+				} catch (NfcLibException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
 		});
 		final Button button3 = (Button) findViewById(R.id.button3);
 		button3.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				send5k();
+				try {
+					send5k();
+				} catch (NfcLibException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
-		initiator = init();
+		try {
+			initiator = init();
+		} catch (NfcLibException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	protected void onDestroy() {
+		if(initiator!=null) {
+			initiator.shutdown(this);
+		}
 	}
 
-	private void send50b() {
+	private void send50b() throws NfcLibException {
 		dataSize = getRepeat();
-		counter = 0;
 		this.data.clear();
 		receivedData.clear();
 		for(int i=0;i<dataSize;i++) {
@@ -77,15 +102,13 @@ public class Test extends Activity {
 		
 		final TextView textView1 = (TextView) findViewById(R.id.textView1);
 		textView1.setText(digest(data));
-		initiator.turnOn(this);
-		initiator.startInitiating();
+		initiator.startInitiating(this);
 	}
 
 	
 
-	private void send500b() {
+	private void send500b() throws NfcLibException {
 		dataSize = getRepeat();
-		counter = 0;
 		this.data.clear();
 		receivedData.clear();
 		for(int i=0;i<dataSize;i++) {
@@ -96,13 +119,11 @@ public class Test extends Activity {
 
 		final TextView textView1 = (TextView) findViewById(R.id.textView1);
 		textView1.setText(digest(data));
-		initiator.turnOn(this);
-		initiator.startInitiating();
+		initiator.startInitiating(this);
 	}
 
-	protected void send5k() {
+	protected void send5k() throws NfcLibException {
 		dataSize = getRepeat();
-		counter = 0;
 		this.data.clear();
 		receivedData.clear();
 		for(int i=0;i<dataSize;i++) {
@@ -113,8 +134,7 @@ public class Test extends Activity {
 		
 		final TextView textView1 = (TextView) findViewById(R.id.textView1);
 		textView1.setText(digest(data));
-		initiator.turnOn(this);
-		initiator.startInitiating();
+		initiator.startInitiating(this);
 	}
 	
 	private int getRepeat() {
@@ -132,7 +152,7 @@ public class Test extends Activity {
 		return -1;
 	}
 	
-	private NfcSetup init() {
+	private NfcSetup init() throws NfcLibException {
 		NfcSetup initiator = new NfcSetup(new NfcInitiatorHandler() {
 			
 			@Override
@@ -144,9 +164,6 @@ public class Test extends Activity {
 			public boolean hasMoreMessages() {
 				System.err.println("about to return: " +data.size()); 
 				boolean retVal = data.size() > 0; 
-				if(!retVal) {
-					Test.this.initiator.turnOff(Test.this);
-				}
 				return retVal; 
 			}
 			
