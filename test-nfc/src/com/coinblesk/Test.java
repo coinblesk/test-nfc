@@ -33,11 +33,15 @@ public class Test extends Activity {
 	private int dataSize = 0;
 	private List<byte[]> receivedData = new ArrayList<byte[]>();
 	
-	private NfcSetup initiator = null;
+	private volatile NfcSetup initiator = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		System.err.println("CREATEEE");
 		super.onCreate(savedInstanceState);
+		
+		
+		
 		setContentView(R.layout.activity_test);
 		final Button button1 = (Button) findViewById(R.id.button1);
 		button1.setOnClickListener(new View.OnClickListener() {
@@ -74,19 +78,43 @@ public class Test extends Activity {
 				}
 			}
 		});
+		
+		final Button button4 = (Button) findViewById(R.id.button4);
+		button4.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				initiator.stopInitiating(Test.this);
+			}
+		});
+		
+	}
+	
+	@Override
+	protected void onPause() {
+		System.err.println("PAUSSEEE");
+		super.onPause();
+		if(initiator!=null) {
+			initiator.shutdown(this);
+		}
+	}
+	
+	@Override
+	protected void onResume() {
+		System.err.println("MAKE INIT");
+		super.onResume();
 		try {
+			if(initiator!=null) {
+				initiator.shutdown(this);
+			}
 			initiator = init();
 		} catch (NfcLibException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
 	@Override
 	protected void onDestroy() {
-		if(initiator!=null) {
-			initiator.shutdown(this);
-		}
+		super.onDestroy();
+		
 	}
 
 	private void send50b() throws NfcLibException {
@@ -165,11 +193,6 @@ public class Test extends Activity {
 				System.err.println("about to return: " +data.size()); 
 				boolean retVal = data.size() > 0; 
 				return retVal; 
-			}
-			
-			@Override
-			public boolean isLast() {
-				return data.size() == 1;
 			}
 			
 			@Override
@@ -255,8 +278,10 @@ public class Test extends Activity {
 			for(byte[] inp:input) {
 				System.err.println("udptae with: "+Arrays.toString(inp));
 				digester.update(inp);
+				System.err.println("done with: "+Arrays.toString(inp));
 			}
 			byte[] output = digester.digest();
+			System.err.println("output with: "+Arrays.toString(output));
 			return toHex(output);
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
