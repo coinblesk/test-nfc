@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Random;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,7 +20,9 @@ import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
+import ch.uzh.csg.btlib.BTSetup;
 import ch.uzh.csg.nfclib.NfcInitiatorHandler;
 import ch.uzh.csg.nfclib.NfcLibException;
 import ch.uzh.csg.nfclib.NfcResponseHandler;
@@ -34,6 +40,9 @@ public class Test extends Activity {
 	private List<byte[]> receivedData = new ArrayList<byte[]>();
 	
 	private volatile NfcSetup initiator = null;
+	
+	private BluetoothManager mBluetoothManager;
+    private BluetoothAdapter mBluetoothAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -86,8 +95,53 @@ public class Test extends Activity {
 			}
 		});
 		
+		//BLUETOOTH PART
+		/*
+         * Bluetooth in Android 4.3+ is accessed via the BluetoothManager, rather than
+         * the old static BluetoothAdapter.getInstance()
+         */
+			
+        mBluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+        mBluetoothAdapter = mBluetoothManager.getAdapter();
+        
+		// BLUETOOTH PART
+		/*
+		 * We need to enforce that Bluetooth is first enabled, and take the user
+		 * to settings to enable it if they have not done so.
+		 */
+		if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+			// Bluetooth is disabled
+			Intent enableBtIntent = new Intent(
+					BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			startActivity(enableBtIntent);
+			finish();
+			return;
+		}
+
+		/*
+		 * Check for Bluetooth LE Support. In production, our manifest entry
+		 * will keep this from installing on these devices, but this will allow
+		 * test devices or other sideloads to report whether or not the feature
+		 * exists.
+		 */
+		/*if (!getPackageManager().hasSystemFeature(
+				PackageManager.FEATURE_BLUETOOTH_LE)) {
+			Toast.makeText(this, "No LE Support.", Toast.LENGTH_SHORT).show();
+			finish();
+			return;
+		}
+        
+        final Button button5 = (Button) findViewById(R.id.button5);
+		button5.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				BTSetup b = new BTSetup(Test.this);
+				b.connect(Test.this, "48:59:29:0E:4F:C1");
+				//C0:EE:FB:32:42:54
+			}
+		});*/
+		
 	}
-	
+		
 	@Override
 	protected void onPause() {
 		System.err.println("PAUSSEEE");
@@ -109,6 +163,9 @@ public class Test extends Activity {
 		} catch (NfcLibException e) {
 			e.printStackTrace();
 		}
+		
+		
+		
 	}
 	
 	@Override
