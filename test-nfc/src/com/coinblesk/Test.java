@@ -124,21 +124,24 @@ public class Test extends Activity {
 		 * test devices or other sideloads to report whether or not the feature
 		 * exists.
 		 */
-		/*if (!getPackageManager().hasSystemFeature(
+		if (!getPackageManager().hasSystemFeature(
 				PackageManager.FEATURE_BLUETOOTH_LE)) {
 			Toast.makeText(this, "No LE Support.", Toast.LENGTH_SHORT).show();
-			finish();
-			return;
+			//finish();
+			//return;
 		}
+		
+		final BTSetup b = new BTSetup(this);
         
         final Button button5 = (Button) findViewById(R.id.button5);
 		button5.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				BTSetup b = new BTSetup(Test.this);
-				b.connect(Test.this, "48:59:29:0E:4F:C1");
+				
+				b.connect(Test.this);
 				//C0:EE:FB:32:42:54
+				//B4:CE:F6:B5:9E:B8
 			}
-		});*/
+		});
 		
 	}
 		
