@@ -23,11 +23,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import ch.uzh.csg.btlib.BTSetup;
-import ch.uzh.csg.nfclib.NfcInitiatorHandler;
-import ch.uzh.csg.nfclib.NfcLibException;
-import ch.uzh.csg.nfclib.NfcResponseHandler;
+import ch.uzh.csg.comm.CommSetup;
+import ch.uzh.csg.comm.NfcInitiatorHandler;
+import ch.uzh.csg.comm.NfcLibException;
+import ch.uzh.csg.comm.NfcResponseHandler;
+import ch.uzh.csg.comm.ResponseLater;
 import ch.uzh.csg.nfclib.NfcSetup;
-import ch.uzh.csg.nfclib.ResponseLater;
 
 public class Test extends Activity {
 
@@ -39,7 +40,7 @@ public class Test extends Activity {
 	private int dataSize = 0;
 	private List<byte[]> receivedData = new ArrayList<byte[]>();
 	
-	private volatile NfcSetup initiator = null;
+	private volatile CommSetup initiator = null;
 	
 	private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -131,15 +132,11 @@ public class Test extends Activity {
 			//return;
 		}
 		
-		final BTSetup b = new BTSetup(this);
-        
-        final Button button5 = (Button) findViewById(R.id.button5);
+		final Button button5 = (Button) findViewById(R.id.button5);
 		button5.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
+				initiator = new BTSetup(initNfc, initResponse, Test.this);
 				
-				b.connect(Test.this);
-				//C0:EE:FB:32:42:54
-				//B4:CE:F6:B5:9E:B8
 			}
 		});
 		
@@ -149,6 +146,7 @@ public class Test extends Activity {
 	protected void onPause() {
 		System.err.println("PAUSSEEE");
 		super.onPause();
+		
 		if(initiator!=null) {
 			initiator.shutdown(this);
 		}
@@ -162,7 +160,7 @@ public class Test extends Activity {
 			if(initiator!=null) {
 				initiator.shutdown(this);
 			}
-			initiator = init();
+			initiator = new NfcSetup(initNfc, initResponse, this);
 		} catch (NfcLibException e) {
 			e.printStackTrace();
 		}
@@ -240,95 +238,89 @@ public class Test extends Activity {
 		return -1;
 	}
 	
-	private NfcSetup init() throws NfcLibException {
-		NfcSetup initiator = new NfcSetup(new NfcInitiatorHandler() {
+	NfcInitiatorHandler initNfc = new NfcInitiatorHandler() {
+		
+		@Override
+		public byte[] nextMessage() {
+			return data.remove(0);
+		}
+		
+		@Override
+		public boolean hasMoreMessages() {
+			System.err.println("about to return: " +data.size()); 
+			boolean retVal = data.size() > 0; 
+			return retVal; 
+		}
+		
+		@Override
+		public boolean isFirst() {
+			return data.size() == dataSize;
+		}
+		
+		@Override
+		public void handleMessageReceived(final byte[] message) {
+			Test.this.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					receivedData.add(message);
+					final TextView textView2 = (TextView) findViewById(R.id.textView2);
+					textView2.setText(digest(receivedData));
+				}
+			});
 			
-			@Override
-			public byte[] nextMessage() {
-				return data.remove(0);
-			}
+		}
+		
+		@Override
+		public void handleStatus(String message) {
+			System.err.println("status sender: " + message);
+		}
+		
+		@Override
+		public void handleFailed(String message) {
+			System.err.println("error sender: " + message);
+		}
+	};
+	
+	NfcResponseHandler initResponse = new NfcResponseHandler() {
+		
+		@Override
+		public void handleStatus(String message) {
+			System.err.println("status recipient: " + message);
+		}
+		
+		@Override
+		public byte[] handleMessageReceived(final byte[] message,
+				final ResponseLater responseLater) {
+			final ToggleButton toggleButton = (ToggleButton) findViewById(R.id.toggleButton1);
 			
-			@Override
-			public boolean hasMoreMessages() {
-				System.err.println("about to return: " +data.size()); 
-				boolean retVal = data.size() > 0; 
-				return retVal; 
-			}
-			
-			@Override
-			public boolean isFirst() {
-				return data.size() == dataSize;
-			}
-			
-			@Override
-			public void handleMessageReceived(final byte[] message) {
-				Test.this.runOnUiThread(new Runnable() {
+			final int nr = toggleButton.isChecked() ? 100 : 0;
+			if(nr == 0) {
+				return message;
+			} else {
+				new Thread(new Runnable() {
+					
 					@Override
 					public void run() {
-						receivedData.add(message);
-						final TextView textView2 = (TextView) findViewById(R.id.textView2);
-						textView2.setText(digest(receivedData));
-					}
-				});
-				
-			}
-			
-			@Override
-			public void handleStatus(String message) {
-				System.err.println("status sender: " + message);
-			}
-			
-			@Override
-			public void handleFailed(String message) {
-				System.err.println("error sender: " + message);
-			}
-
-			
-
-			
-			
-		}, new NfcResponseHandler() {
-			
-			@Override
-			public void handleStatus(String message) {
-				System.err.println("status recipient: " + message);
-			}
-			
-			@Override
-			public byte[] handleMessageReceived(final byte[] message,
-					final ResponseLater responseLater) {
-				final ToggleButton toggleButton = (ToggleButton) findViewById(R.id.toggleButton1);
-				
-				final int nr = toggleButton.isChecked() ? 100 : 0;
-				if(nr == 0) {
-					return message;
-				} else {
-					new Thread(new Runnable() {
-						
-						@Override
-						public void run() {
-							try {
-								Thread.sleep(nr);
-							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							responseLater.response(message);
-							
+						try {
+							Thread.sleep(nr);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
-					}).start();
-					return null;
-				}
+						responseLater.response(message);
+						
+					}
+				}).start();
+				return null;
 			}
+		}
+		
+		@Override
+		public void handleFailed(String message) {
+			System.err.println("error recipient: " + message);
 			
-			@Override
-			public void handleFailed(String message) {
-				System.err.println("error recipient: " + message);
-				
-			}
-		}, this);
-		return initiator;
-	}
+		}
+	};
 
 	private static String digest(List<byte[]> input) {
 		MessageDigest digester;
