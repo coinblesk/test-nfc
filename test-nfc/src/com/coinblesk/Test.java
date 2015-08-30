@@ -22,13 +22,12 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-import ch.uzh.csg.btlib.BTSetup;
-import ch.uzh.csg.comm.CommSetup;
+import ch.uzh.csg.btlib.BTLEController;
 import ch.uzh.csg.comm.NfcInitiatorHandler;
 import ch.uzh.csg.comm.NfcLibException;
 import ch.uzh.csg.comm.NfcResponseHandler;
 import ch.uzh.csg.comm.ResponseLater;
-import ch.uzh.csg.nfclib.NfcSetup;
+import ch.uzh.csg.nfclib.NfcInitiatorSetup;
 
 public class Test extends Activity {
 
@@ -40,7 +39,7 @@ public class Test extends Activity {
 	private int dataSize = 0;
 	private List<byte[]> receivedData = new ArrayList<byte[]>();
 	
-	private volatile CommSetup initiator = null;
+	private volatile NfcInitiatorSetup initiator = null;
 	
 	private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -132,13 +131,13 @@ public class Test extends Activity {
 			//return;
 		}
 		
-		final Button button5 = (Button) findViewById(R.id.button5);
+		/*final Button button5 = (Button) findViewById(R.id.button5);
 		button5.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				initiator = new BTSetup(initNfc, initResponse, Test.this);
 				
 			}
-		});
+		});*/
 		
 	}
 		
@@ -148,7 +147,7 @@ public class Test extends Activity {
 		super.onPause();
 		
 		if(initiator!=null) {
-			initiator.shutdown(this);
+			initiator.stopInitiating(this);
 		}
 	}
 	
@@ -157,10 +156,7 @@ public class Test extends Activity {
 		System.err.println("MAKE INIT");
 		super.onResume();
 		try {
-			if(initiator!=null) {
-				initiator.shutdown(this);
-			}
-			initiator = new NfcSetup(initNfc, initResponse, this);
+			initiator = new NfcInitiatorSetup(initNfc, this);
 		} catch (NfcLibException e) {
 			e.printStackTrace();
 		}
@@ -253,11 +249,6 @@ public class Test extends Activity {
 		}
 		
 		@Override
-		public boolean isFirst() {
-			return data.size() == dataSize;
-		}
-		
-		@Override
 		public void handleMessageReceived(final byte[] message) {
 			Test.this.runOnUiThread(new Runnable() {
 				@Override
@@ -278,6 +269,36 @@ public class Test extends Activity {
 		@Override
 		public void handleFailed(String message) {
 			System.err.println("error sender: " + message);
+		}
+
+		@Override
+		public void setUUID(byte[] uuid) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void btleDiscovered(BTLEController btleController) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void nfcTagLost() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void nfcTagFound() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void btTagLost() {
+			// TODO Auto-generated method stub
+			
 		}
 	};
 	
@@ -319,6 +340,12 @@ public class Test extends Activity {
 		public void handleFailed(String message) {
 			System.err.println("error recipient: " + message);
 			
+		}
+
+		@Override
+		public byte[] getUUID() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	};
 
