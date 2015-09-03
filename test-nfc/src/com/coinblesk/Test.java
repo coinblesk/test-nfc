@@ -91,7 +91,7 @@ public class Test extends Activity {
 		final Button button4 = (Button) findViewById(R.id.button4);
 		button4.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				initiator.stopInitiating(Test.this);
+				initiator.stop(Test.this);
 			}
 		});
 		
@@ -147,7 +147,7 @@ public class Test extends Activity {
 		super.onPause();
 		
 		if(initiator!=null) {
-			initiator.stopInitiating(this);
+			initiator.stop(this);
 		}
 	}
 	
@@ -184,7 +184,7 @@ public class Test extends Activity {
 		
 		final TextView textView1 = (TextView) findViewById(R.id.textView1);
 		textView1.setText(digest(data));
-		initiator.startInitiating(this);
+		initiator.start(this);
 	}
 
 	
@@ -201,7 +201,7 @@ public class Test extends Activity {
 
 		final TextView textView1 = (TextView) findViewById(R.id.textView1);
 		textView1.setText(digest(data));
-		initiator.startInitiating(this);
+		initiator.start(this);
 	}
 
 	protected void send5k() throws NfcLibException {
@@ -216,7 +216,7 @@ public class Test extends Activity {
 		
 		final TextView textView1 = (TextView) findViewById(R.id.textView1);
 		textView1.setText(digest(data));
-		initiator.startInitiating(this);
+		initiator.start(this);
 	}
 	
 	private int getRepeat() {
@@ -271,17 +271,6 @@ public class Test extends Activity {
 			System.err.println("error sender: " + message);
 		}
 
-		@Override
-		public void setUUID(byte[] uuid) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void btleDiscovered(BTLEController btleController) {
-			// TODO Auto-generated method stub
-			
-		}
 
 		@Override
 		public void nfcTagLost() {
@@ -297,6 +286,24 @@ public class Test extends Activity {
 
 		@Override
 		public void btTagLost() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void setUUID(byte[] uuid, boolean first) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void btTagFound(BTLEController btleController) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void protocolDone() {
 			// TODO Auto-generated method stub
 			
 		}
@@ -346,6 +353,30 @@ public class Test extends Activity {
 		public byte[] getUUID() {
 			// TODO Auto-generated method stub
 			return null;
+		}
+
+		@Override
+		public void nfcTagLost() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void btTagFound() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void btTagLost() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void nfcTagFound() {
+			// TODO Auto-generated method stub
+			
 		}
 	};
 
